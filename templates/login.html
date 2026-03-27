@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - TalentMatch AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+        }
+        .login-container {
+            width: 100%;
+            max-width: 480px;
+        }
+        .login-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .login-header h1 {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        .role-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .role-option {
+            padding: 1rem;
+            border: 2px solid var(--gray-300);
+            border-radius: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .role-option:hover {
+            border-color: var(--primary);
+        }
+        .role-option.active {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+        .role-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .demo-creds {
+            background: var(--gray-100);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 2rem;
+            font-size: 0.875rem;
+        }
+        .demo-creds strong {
+            color: var(--primary);
+        }
+        .register-link {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        .register-link a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>🎯 Welcome Back</h1>
+                <p style="color: var(--gray-600);">Sign in to continue</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="role-selector">
+                <div class="role-option active" onclick="selectRole('jobseeker', this)">
+                    <div class="role-icon">👤</div>
+                    <div>Job Seeker</div>
+                </div>
+                <div class="role-option" onclick="selectRole('recruiter', this)">
+                    <div class="role-icon">💼</div>
+                    <div>Recruiter</div>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <input type="hidden" name="role" id="selected-role" value="jobseeker">
+                
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-large" style="width: 100%;">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="demo-creds">
+                <strong>Demo Accounts:</strong><br>
+                <strong>Job Seeker:</strong> jobseeker1 / jobseeker123<br>
+                <strong>Recruiter:</strong> recruiter1 / recruiter123
+            </div>
+
+            <div class="register-link">
+                Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectRole(role, element) {
+            document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById('selected-role').value = role;
+        }
+    </script>
+</body>
+</html>

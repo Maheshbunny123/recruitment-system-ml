@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply - {{ job.title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">🎯 TalentMatch AI</div>
+        <div class="nav-menu">
+            <a href="{{ url_for('jobseeker_dashboard') }}" class="nav-link">← Back to Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+            <div class="section">
+                <h1>{{ job.title }}</h1>
+                
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1.5rem 0; padding-bottom: 1.5rem; border-bottom: 2px solid var(--gray-200);">
+                    <span class="badge badge-primary">{{ job.location or 'Remote' }}</span>
+                    <span class="badge badge-success">{{ job.job_type or 'Full-time' }}</span>
+                    <span class="badge badge-primary">{{ job.experience_level or 'Mid-level' }}</span>
+                    {% if job.salary_range %}
+                    <span class="badge badge-success">{{ job.salary_range }}</span>
+                    {% endif %}
+                </div>
+                
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem;">Job Description</h3>
+                    <p style="line-height: 1.8; color: var(--gray-700);">{{ job.description }}</p>
+                </div>
+                
+                <div>
+                    <h3 style="margin-bottom: 1rem;">Requirements</h3>
+                    <p style="line-height: 1.8; color: var(--gray-700);">{{ job.requirements }}</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Apply for this Position</h2>
+                <p style="color: var(--gray-600); margin-bottom: 2rem;">
+                    ✨ Your resume will be automatically screened using AI. High-scoring candidates are prioritized!
+                </p>
+
+                <form method="POST" enctype="multipart/form-data" id="apply-form">
+                    <div class="form-group">
+                        <label for="resume">Upload Resume * (PDF, DOCX, TXT - Max 16MB)</label>
+                        <input type="file" id="resume" name="resume" accept=".pdf,.docx,.txt" required 
+                               style="padding: 1rem; border: 2px dashed var(--gray-300); border-radius: 0.5rem; background: var(--gray-50);">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cover_letter">Cover Letter (Optional)</label>
+                        <textarea id="cover_letter" name="cover_letter" rows="6" 
+                                  placeholder="Why are you a great fit for this role?"></textarea>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 1rem; margin-bottom: 1.5rem;">
+                        <h4 style="margin-bottom: 1rem;">🤖 AI Screening</h4>
+                        <p style="margin-bottom: 1rem;">Your application will be evaluated on:</p>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="padding: 0.5rem 0;">✓ Skills match with requirements</li>
+                            <li style="padding: 0.5rem 0;">✓ Years of experience</li>
+                            <li style="padding: 0.5rem 0;">✓ Education qualifications</li>
+                            <li style="padding: 0.5rem 0;">✓ Overall profile strength</li>
+                        </ul>
+                        <p style="margin-top: 1rem; font-size: 0.875rem; opacity: 0.9;">
+                            Candidates scoring 60% or higher are automatically shortlisted!
+                        </p>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-large" style="width: 100%;">
+                        🚀 Submit Application
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2024 TalentMatch AI. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.getElementById('apply-form').addEventListener('submit', function() {
+            const btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Processing with AI...';
+        });
+    </script>
+</body>
+</html>
