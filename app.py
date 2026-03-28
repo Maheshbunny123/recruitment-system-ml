@@ -7,6 +7,9 @@ from datetime import datetime
 import json
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+import json
 from flask import send_file, abort
 import os
 from ml_model import MLResumeModel
@@ -367,27 +370,43 @@ def download_ai_report(app_id):
         return redirect(url_for('login'))
 
     conn = get_db()
-    app = conn.execute(
+    app_data = conn.execute(
         'SELECT a.screening_result, j.posted_by FROM applications a JOIN jobs j ON a.job_id=j.id WHERE a.id=?',
         (app_id,)
     ).fetchone()
     conn.close()
 
-    if not app or app['posted_by'] != session['user_id']:
+    if not app_data or app_data['posted_by'] != session['user_id']:
         return redirect(url_for('recruiter_dashboard'))
 
-    result = json.loads(app['screening_result'])
+    # 🔥 Safe JSON load
+    try:
+        result = json.loads(app_data['screening_result'])
+    except:
+        result = {}
 
-    file_path = f"ai_report_{app_id}.pdf"
-    c = canvas.Canvas(file_path, pagesize=letter)
-    c.drawString(50, 750, f"Match Score: {result['match_score']}%")
-    c.drawString(50, 720, f"Recommendation: {result['recommendation']}")
-    c.drawString(50, 690, f"Experience: {result['experience_years']} years")
-    c.drawString(50, 660, f"Education: {result['education_level']}")
-    c.drawString(50, 630, f"Skills Matched: {', '.join(result['skills_matched'])}")
+    # 🔥 MEMORY PDF (NO FILE SAVE)
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+
+    c.drawString(50, 750, f"Match Score: {result.get('match_score', 'N/A')}%")
+    c.drawString(50, 720, f"Recommendation: {result.get('recommendation', 'N/A')}")
+    c.drawString(50, 690, f"Experience: {result.get('experience_years', 'N/A')} years")
+    c.drawString(50, 660, f"Education: {result.get('education_level', 'N/A')}")
+
+    skills = result.get('skills_matched', [])
+    c.drawString(50, 630, f"Skills Matched: {', '.join(skills) if skills else 'N/A'}")
+
     c.save()
 
-    return send_file(file_path, as_attachment=True)
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f"ai_report_{app_id}.pdf",
+        mimetype='application/pdf'
+    )
 
 
 
