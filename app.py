@@ -364,6 +364,7 @@ def ai_shortlist_all(job_id):
 
     return jsonify({'success': True, 'processed': updated})
 
+
 @app.route('/recruiter/applications/<int:app_id>/download-report')
 def download_ai_report(app_id):
     if 'user_id' not in session or session.get('role') != 'recruiter':
@@ -379,23 +380,32 @@ def download_ai_report(app_id):
     if not app_data or app_data['posted_by'] != session['user_id']:
         return redirect(url_for('recruiter_dashboard'))
 
-    # 🔥 Safe JSON load
+    # 🔥 Safe JSON parsing
     try:
         result = json.loads(app_data['screening_result'])
     except:
         result = {}
 
-    # 🔥 MEMORY PDF (NO FILE SAVE)
+    # 🔥 Safe defaults (IMPORTANT)
+    match_score = result.get('match_score', 'N/A')
+    recommendation = result.get('recommendation', 'N/A')
+    experience = result.get('experience_years', 'N/A')
+    education = result.get('education_level', 'N/A')
+    skills = result.get('skills_matched', [])
+
+    if not isinstance(skills, list):
+        skills = []
+
+    # 🔥 Create PDF in memory
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
 
-    c.drawString(50, 750, f"Match Score: {result.get('match_score', 'N/A')}%")
-    c.drawString(50, 720, f"Recommendation: {result.get('recommendation', 'N/A')}")
-    c.drawString(50, 690, f"Experience: {result.get('experience_years', 'N/A')} years")
-    c.drawString(50, 660, f"Education: {result.get('education_level', 'N/A')}")
-
-    skills = result.get('skills_matched', [])
-    c.drawString(50, 630, f"Skills Matched: {', '.join(skills) if skills else 'N/A'}")
+    c.drawString(50, 750, "AI Resume Screening Report")
+    c.drawString(50, 720, f"Match Score: {match_score}%")
+    c.drawString(50, 690, f"Recommendation: {recommendation}")
+    c.drawString(50, 660, f"Experience: {experience} years")
+    c.drawString(50, 630, f"Education: {education}")
+    c.drawString(50, 600, f"Skills: {', '.join(skills) if skills else 'N/A'}")
 
     c.save()
 
