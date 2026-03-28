@@ -7,6 +7,8 @@ from datetime import datetime
 import json
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from flask import send_file, abort
+import os
 from ml_model import MLResumeModel
 
 ml_model = MLResumeModel()
@@ -495,21 +497,34 @@ def apply_job(job_id):
     return render_template('apply_job.html', job=job)
 @app.route('/download-resume/<int:app_id>')
 def download_resume(app_id):
+    # 🔐 Check login + role
     if 'user_id' not in session or session.get('role') != 'recruiter':
         return redirect(url_for('login'))
     
     conn = get_db()
-    app = conn.execute('''
-        SELECT a.resume_path, j.posted_by FROM applications a
-        JOIN jobs j ON a.job_id = j.id WHERE a.id = ?
+    
+    app_data = conn.execute('''
+        SELECT a.resume_path, j.posted_by 
+        FROM applications a
+        JOIN jobs j ON a.job_id = j.id 
+        WHERE a.id = ?
     ''', (app_id,)).fetchone()
+    
     conn.close()
     
-    if not app or app['posted_by'] != session['user_id']:
-        flash('Unauthorized', 'error')
+    # 🔐 Authorization check
+    if not app_data or app_data['posted_by'] != session['user_id']:
+        flash('Unauthorized access', 'error')
         return redirect(url_for('recruiter_dashboard'))
     
-    return send_file(app['resume_path'], as_attachment=True)
+    file_path = app_data['resume_path']
+    
+    # 🔥 IMPORTANT FIX (Render-safe)
+    if file_path and os.path.exists(file_path):
+        return send_file(file_path, as_attachment=True)
+    else:
+        flash('Resume file not found on server (may be cleared on Render)', 'warning')
+        return redirect(url_for('recruiter_dashboard'))
 
 os.makedirs('resumes', exist_ok=True)
 init_db()
